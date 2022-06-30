@@ -1,20 +1,21 @@
-import { } from 'creep';
-import { } from 'think';
-import think from './think.mjs';
+import { } from './creep.mjs';
+import { } from './think.mjs';
+import { utils, constants, prototypes } from 'game';
 
 const STATE_IDLE = 0;
 const STATE_HARVEST = 1;
 const STATE_TRANSFER = 2;
 const STATE_ESCAPE = 3;
 
-var Miner = {
+var Worker = {
     reset: function (creep) {
+        creep.role = "worker";
         creep.state = STATE_HARVEST;
         creep.target = null;
         creep.destination = null;
     },
     setTarget: function (creep, target) {
-
+        creep.target = target;
     },
     run: function (creep) {
         switch (creep.state) {
@@ -32,15 +33,15 @@ var Miner = {
                 else {
                     //if target is source, go and harvest the target
                     var ret;
-                    if (creep.target.structureType == STRUCTURE_SOURCE) {
+                    if (creep.target.structureType == constants.STRUCTURE_SOURCE) {
                         ret = creep.harvest(creep.target);
                     }
                     else {
-                        ret = creep.withdraw(creep.target, RESOURCE_ENERGY);
+                        ret = creep.withdraw(creep.target, constants.RESOURCE_ENERGY);
                     }
-
+                    console.log(ret);
                     switch (ret) {
-                        case ERR_NOT_IN_RANGE:
+                        case constants.ERR_NOT_IN_RANGE:
                             creep.moveTo(creep.target);
                             break;
                     }
@@ -51,12 +52,19 @@ var Miner = {
                 break;
             case STATE_TRANSFER:
                 //if creep store is empty or destination is full, switch to withdraw or harvest state
+                //TODO: check if it's a construction site
                 if (creep.store.energy == 0 ||
                     creep.destination.store.getFreeCapacity() == 0) {
                     creep.state = STATE_HARVEST;
                 }
                 else {
-                    
+                    //trabsfer energy to destination
+                    var ret = creep.transfer(creep.destination, constants.RESOURCE_ENERGY);
+                    switch (ret) {
+                        case constants.ERR_NOT_IN_RANGE:
+                            creep.moveTo(creep.destination);
+                            break;
+                    }
                 }
                 break;
 
@@ -64,4 +72,4 @@ var Miner = {
     }
 }
 
-export default Miner;
+export default Worker;
